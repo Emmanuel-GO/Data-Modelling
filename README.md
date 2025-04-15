@@ -177,7 +177,79 @@ Allows users to explore data from **high-level summaries** to detailed views:
 
 ---
 
+![](Starschema.png)
 
+---
+
+## 🧾 Handling Degenerate Dimensions (DDs)
+
+---
+
+### 📖 What is a Degenerate Dimension?
+
+A **Degenerate Dimension (DD)** is an attribute that:
+
+- Exists **within the fact table**.
+- Does **not have a separate dimension table**.
+- Typically includes **transactional identifiers** such as `Invoice_ID`.
+
+>  These attributes:
+> - Do **not contain descriptive details**.
+> - Are used for **grouping, filtering, or analytical tracking**.
+
+---
+
+###  Identified Degenerate Dimension in Our Model
+
+**`Invoice_ID`** is a **degenerate dimension** because:
+
+- It **does not have additional descriptive attributes** to warrant a separate dimension table.
+- It is stored directly in the `Fact_Sales` table.
+- It serves as a **unique identifier for each transaction**.
+
+---
+
+###  How Will We Manage It?
+
+-  Keep `Invoice_ID` inside the **Fact Table (`Fact_Sales`)**.
+-  Use it for:
+  - Aggregations (e.g., **Total Sales per Invoice**)
+  - **Transaction tracking**
+  - Reporting purposes
+-  **Optimize indexing** on `Invoice_ID` to improve query performance.
+
+---
+
+##  Slowly Changing Dimensions (SCD) Implementation
+
+---
+
+### 📌 What is SCD?
+
+**Slowly Changing Dimensions (SCDs)** manage **changes in dimension attributes over time** while preserving **historical accuracy**.
+
+---
+
+###  SCD Types & Implementation in Our Model
+
+| **SCD Type** | **Description** | **Usage in Our Model** | **Trade-offs** |
+|--------------|------------------|--------------------------|----------------|
+| **Type 1** (Overwrite) | Overwrites the existing attribute value with the latest, **losing historical data**. | `Dim_Store` (e.g., Store Manager change) | ✅ Simple implementation<br>✅ Saves storage<br>❌ No historical tracking |
+| **Type 2** (Versioning) | Creates a **new row** with a new Surrogate Key (SK), maintaining **full history**. | `Dim_Customer` (e.g., Address, Segment),<br>`Dim_Product` (e.g., Price) | ✅ Full history tracking<br>❌ More storage required<br>❌ ETL is more complex |
+| **Type 3** (Soft History) | Stores the **previous value** in an additional column (limited history). | `Dim_Product` (e.g., Previous_Unit_Price) | ✅ Tracks recent changes<br>❌ Only stores one previous value |
+
+---
+
+### 🔧 My SCD Strategy
+
+- ✅ **Type 2** for dimensions where **full historical tracking** is important:
+  - `Dim_Customer`, `Dim_Product`
+- ✅ **Type 1** for dimensions where **history is not critical**:
+  - `Dim_Store`
+- ✅ **Type 3** for cases where **only the last value matters**:
+  - `Dim_Product.Price` ➝ `Previous_Unit_Price`
+
+---
 
 
 
